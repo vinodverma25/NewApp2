@@ -1,0 +1,31 @@
+
+{% extends "base.html" %}
+
+{% block title %}Server Error - YouTube Shorts Generator{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 text-center">
+            <div class="card shadow">
+                <div class="card-body">
+                    <i class="fas fa-server fa-4x text-danger mb-4"></i>
+                    <h1 class="display-4 mb-3">500</h1>
+                    <h3 class="mb-3">Internal Server Error</h3>
+                    <p class="text-muted mb-4">
+                        Something went wrong on our end. We're working to fix it.
+                    </p>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{{ url_for('index') }}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>Go Home
+                        </a>
+                        <a href="{{ url_for('health_check') }}" class="btn btn-outline-info">
+                            <i class="fas fa-heartbeat me-2"></i>Check System Health
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

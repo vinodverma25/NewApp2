@@ -1,0 +1,1749 @@
+{% extends "base.html" %}
+
+{% block title %}Video Editor - YouTube Shorts Generator{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" id="videoEditor">
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-dark bg-dark border-bottom">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <a href="{{ url_for('view_results', job_id=job_id) }}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Results
+                </a>
+                <h5 class="mb-0 text-white">
+                    <i class="fas fa-video me-2"></i>Video Editor - {{ short.title or 'Untitled' }}
+                </h5>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary" id="undoBtn" title="Undo">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button class="btn btn-outline-primary" id="redoBtn" title="Redo">
+                    <i class="fas fa-redo"></i>
+                </button>
+                <button class="btn btn-success" id="exportBtn">
+                    <i class="fas fa-download me-2"></i>Export
+                </button>
+                <button class="btn btn-primary" id="uploadBtn">
+                    <i class="fab fa-youtube me-2"></i>Upload to YouTube
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Editor Layout -->
+    <div class="row g-0" style="height: calc(100vh - 76px);">
+        
+        <!-- Effects Panel (Left Sidebar) -->
+        <div class="col-md-3 border-end bg-dark" id="effectsPanel">
+            <div class="p-3">
+                <!-- Effect Categories Tabs -->
+                <ul class="nav nav-pills nav-fill mb-3" id="effectsTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active btn-sm" data-bs-toggle="pill" data-bs-target="#colorGrading">
+                            <i class="fas fa-palette"></i><br><small>Color</small>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#viralEffects">
+                            <i class="fas fa-magic"></i><br><small>Effects</small>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#textOverlays">
+                            <i class="fas fa-font"></i><br><small>Text</small>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#transitions">
+                            <i class="fas fa-exchange-alt"></i><br><small>Transitions</small>
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Effect Panels -->
+                <div class="tab-content">
+                    <!-- Color Grading Panel -->
+                    <div class="tab-pane fade show active" id="colorGrading">
+                        <h6 class="text-white mb-3">Color Grading</h6>
+                        
+                        <!-- LUT Presets -->
+                        <div class="mb-3">
+                            <label class="form-label text-white">LUT Presets</label>
+                            <select class="form-select form-select-sm" id="lutPreset">
+                                <option value="">None</option>
+                                <option value="cinematic">Cinematic</option>
+                                <option value="vintage">Vintage</option>
+                                <option value="bright">Bright & Airy</option>
+                                <option value="dark_moody">Dark Moody</option>
+                                <option value="warm">Warm</option>
+                                <option value="cool">Cool</option>
+                                <option value="sunset">Sunset</option>
+                                <option value="cyberpunk">Cyberpunk</option>
+                            </select>
+                        </div>
+
+                        <!-- Manual Controls -->
+                        <div class="mb-3">
+                            <label class="form-label text-white">Brightness</label>
+                            <input type="range" class="form-range" id="brightness" min="0.5" max="2" step="0.1" value="1">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Dark</small>
+                                <small class="text-muted">Bright</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Contrast</label>
+                            <input type="range" class="form-range" id="contrast" min="0.5" max="2" step="0.1" value="1">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Saturation</label>
+                            <input type="range" class="form-range" id="saturation" min="0" max="2" step="0.1" value="1">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Hue Shift</label>
+                            <input type="range" class="form-range" id="hueShift" min="-180" max="180" step="5" value="0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Exposure</label>
+                            <input type="range" class="form-range" id="exposure" min="-2" max="2" step="0.1" value="0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Shadows</label>
+                            <input type="range" class="form-range" id="shadows" min="-1" max="1" step="0.1" value="0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Highlights</label>
+                            <input type="range" class="form-range" id="highlights" min="-1" max="1" step="0.1" value="0">
+                        </div>
+                    </div>
+
+                    <!-- Viral Effects Panel -->
+                    <div class="tab-pane fade" id="viralEffects">
+                        <h6 class="text-white mb-3">Viral Effects</h6>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary w-100 btn-sm effect-btn" data-effect="tiktok_glow">
+                                    <i class="fas fa-sun mb-1"></i><br>
+                                    <small>TikTok Glow</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary w-100 btn-sm effect-btn" data-effect="vhs_retro">
+                                    <i class="fas fa-tv mb-1"></i><br>
+                                    <small>VHS Retro</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary w-100 btn-sm effect-btn" data-effect="glitch">
+                                    <i class="fas fa-bug mb-1"></i><br>
+                                    <small>Glitch</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary w-100 btn-sm effect-btn" data-effect="neon_cyber">
+                                    <i class="fas fa-bolt mb-1"></i><br>
+                                    <small>Neon Cyber</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary w-100 btn-sm effect-btn" data-effect="dreamy_blur">
+                                    <i class="fas fa-cloud mb-1"></i><br>
+                                    <small>Dreamy Blur</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary w-100 btn-sm effect-btn" data-effect="film_grain">
+                                    <i class="fas fa-film mb-1"></i><br>
+                                    <small>Film Grain</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Effect Intensity</label>
+                            <input type="range" class="form-range" id="effectIntensity" min="0" max="1" step="0.1" value="1">
+                        </div>
+
+                        <!-- Background Effects -->
+                        <h6 class="text-white mb-2 mt-4">Background</h6>
+                        <div class="mb-3">
+                            <button class="btn btn-outline-secondary w-100 btn-sm" id="backgroundBlurBtn">
+                                <i class="fas fa-eye-slash me-2"></i>Background Blur
+                            </button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Blur Intensity</label>
+                            <input type="range" class="form-range" id="blurIntensity" min="0" max="1" step="0.1" value="0.5">
+                        </div>
+
+                        <!-- Face Filters -->
+                        <h6 class="text-white mb-2 mt-4">Face Filters</h6>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <button class="btn btn-outline-warning w-100 btn-sm face-filter-btn" data-filter="smooth_skin">
+                                    <i class="fas fa-star mb-1"></i><br>
+                                    <small>Smooth</small>
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button class="btn btn-outline-warning w-100 btn-sm face-filter-btn" data-filter="glow_face">
+                                    <i class="fas fa-sparkles mb-1"></i><br>
+                                    <small>Glow</small>
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button class="btn btn-outline-warning w-100 btn-sm face-filter-btn" data-filter="beauty_enhance">
+                                    <i class="fas fa-magic mb-1"></i><br>
+                                    <small>Beauty</small>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Text Overlays Panel -->
+                    <div class="tab-pane fade" id="textOverlays">
+                        <h6 class="text-white mb-3">Text Overlays</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-white">Text Content</label>
+                            <textarea class="form-control form-control-sm" id="textContent" rows="2" 
+                                     placeholder="Enter your text..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Font Size</label>
+                            <input type="range" class="form-range" id="fontSize" min="0.5" max="3" step="0.1" value="1">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Font Style</label>
+                            <select class="form-select form-select-sm" id="fontStyle">
+                                <option value="normal">Normal</option>
+                                <option value="bold">Bold</option>
+                                <option value="italic">Italic</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Text Color</label>
+                            <input type="color" class="form-control form-control-color" id="textColor" value="#ffffff">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Position</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" id="textX" 
+                                           placeholder="X" value="50">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" id="textY" 
+                                           placeholder="Y" value="50">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary w-100 btn-sm" id="addTextBtn">
+                            <i class="fas fa-plus me-2"></i>Add Text
+                        </button>
+
+                        <!-- Text Templates -->
+                        <h6 class="text-white mb-2 mt-4">Quick Templates</h6>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-outline-info btn-sm text-template-btn" data-template="trending">
+                                "This is trending! 🔥"
+                            </button>
+                            <button class="btn btn-outline-info btn-sm text-template-btn" data-template="follow">
+                                "Follow for more! 👆"
+                            </button>
+                            <button class="btn btn-outline-info btn-sm text-template-btn" data-template="viral">
+                                "Going viral! 🚀"
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Transitions Panel -->
+                    <div class="tab-pane fade" id="transitions">
+                        <h6 class="text-white mb-3">Transitions</h6>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <button class="btn btn-outline-success w-100 btn-sm transition-btn" data-transition="fade">
+                                    <i class="fas fa-adjust mb-1"></i><br>
+                                    <small>Fade</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-success w-100 btn-sm transition-btn" data-transition="slide_left">
+                                    <i class="fas fa-arrow-left mb-1"></i><br>
+                                    <small>Slide Left</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-success w-100 btn-sm transition-btn" data-transition="slide_right">
+                                    <i class="fas fa-arrow-right mb-1"></i><br>
+                                    <small>Slide Right</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-success w-100 btn-sm transition-btn" data-transition="zoom">
+                                    <i class="fas fa-search-plus mb-1"></i><br>
+                                    <small>Zoom</small>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-success w-100 btn-sm transition-btn" data-transition="spin">
+                                    <i class="fas fa-sync-alt mb-1"></i><br>
+                                    <small>Spin</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-white">Duration (seconds)</label>
+                            <input type="range" class="form-range" id="transitionDuration" min="0.5" max="3" step="0.1" value="1">
+                            <div class="text-center">
+                                <small class="text-muted" id="transitionDurationValue">1.0s</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Preview (Center) -->
+        <div class="col-md-6 d-flex flex-column bg-black position-relative">
+            <!-- Preview Controls -->
+            <div class="bg-dark p-2 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-light" id="playPauseBtn">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-light" id="stopBtn">
+                            <i class="fas fa-stop"></i>
+                        </button>
+                        <span class="text-white" id="currentTime">00:00</span>
+                        <span class="text-muted">/</span>
+                        <span class="text-white" id="totalTime">{{ "%.1f"|format(short.duration or 0) }}s</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-light" id="fitBtn" title="Fit to screen">
+                            <i class="fas fa-expand-arrows-alt"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-light" id="fullscreenBtn" title="Fullscreen">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Canvas -->
+            <div class="flex-grow-1 d-flex align-items-center justify-content-center position-relative" id="videoContainer">
+                <canvas id="videoCanvas" class="border" style="max-width: 100%; max-height: 100%; background: #000;"></canvas>
+                
+                <!-- Loading Overlay -->
+                <div class="position-absolute top-50 start-50 translate-middle text-center d-none" id="loadingOverlay">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <div class="text-white">Processing effects...</div>
+                </div>
+
+                <!-- Processing Info -->
+                <div class="position-absolute bottom-0 start-0 m-3 text-white bg-dark bg-opacity-75 rounded p-2" id="processingInfo">
+                    <small>
+                        <i class="fas fa-info-circle me-1"></i>
+                        <span id="processingText">Ready for editing</span>
+                    </small>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="bg-dark p-2">
+                <input type="range" class="form-range" id="videoProgress" min="0" max="100" value="0" 
+                       style="height: 8px;">
+            </div>
+        </div>
+
+        <!-- Properties Panel (Right Sidebar) -->
+        <div class="col-md-3 border-start bg-dark" id="propertiesPanel">
+            <div class="p-3">
+                <h6 class="text-white mb-3">Export Settings</h6>
+                
+                <!-- Format Selection -->
+                <div class="mb-3">
+                    <label class="form-label text-white">Export Format</label>
+                    <select class="form-select form-select-sm" id="exportFormat">
+                        <option value="mp4">MP4 (Recommended)</option>
+                        <option value="webm">WebM</option>
+                        <option value="mov">MOV</option>
+                        <option value="avi">AVI</option>
+                    </select>
+                </div>
+
+                <!-- Resolution Presets -->
+                <div class="mb-3">
+                    <label class="form-label text-white">Resolution</label>
+                    <select class="form-select form-select-sm" id="exportResolution">
+                        <option value="1080x1920">1080x1920 (Full HD Vertical)</option>
+                        <option value="720x1280">720x1280 (HD Vertical)</option>
+                        <option value="1080x1080">1080x1080 (Square)</option>
+                        <option value="1920x1080">1920x1080 (Full HD Horizontal)</option>
+                        <option value="3840x2160">3840x2160 (4K)</option>
+                    </select>
+                </div>
+
+                <!-- Quality Settings -->
+                <div class="mb-3">
+                    <label class="form-label text-white">Quality</label>
+                    <select class="form-select form-select-sm" id="exportQuality">
+                        <option value="high">High (Best Quality)</option>
+                        <option value="medium" selected>Medium (Balanced)</option>
+                        <option value="low">Low (Smaller File)</option>
+                    </select>
+                </div>
+
+                <!-- Platform Presets -->
+                <div class="mb-3">
+                    <label class="form-label text-white">Platform Preset</label>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-danger btn-sm platform-preset" data-platform="youtube">
+                            <i class="fab fa-youtube me-2"></i>YouTube Shorts
+                        </button>
+                        <button class="btn btn-outline-info btn-sm platform-preset" data-platform="tiktok">
+                            <i class="fab fa-tiktok me-2"></i>TikTok
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm platform-preset" data-platform="instagram">
+                            <i class="fab fa-instagram me-2"></i>Instagram Reels
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm platform-preset" data-platform="facebook">
+                            <i class="fab fa-facebook me-2"></i>Facebook Reels
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Audio Settings -->
+                <h6 class="text-white mb-3 mt-4">Audio Settings</h6>
+                <div class="mb-3">
+                    <label class="form-label text-white">Volume</label>
+                    <input type="range" class="form-range" id="audioVolume" min="0" max="2" step="0.1" value="1">
+                </div>
+
+                <div class="mb-3">
+                    <button class="btn btn-outline-info w-100 btn-sm" id="audioEffectsBtn">
+                        <i class="fas fa-music me-2"></i>Audio Effects
+                    </button>
+                </div>
+
+                <!-- Keyframe Animation -->
+                <h6 class="text-white mb-3 mt-4">Animation</h6>
+                <div class="mb-3">
+                    <button class="btn btn-outline-warning w-100 btn-sm" id="keyframeBtn">
+                        <i class="fas fa-key me-2"></i>Add Keyframe
+                    </button>
+                </div>
+
+                <!-- Project Info -->
+                <h6 class="text-white mb-3 mt-4">Project Info</h6>
+                <div class="small text-muted">
+                    <div class="mb-2">
+                        <strong>Duration:</strong> {{ "%.1f"|format(short.duration or 0) }}s
+                    </div>
+                    <div class="mb-2">
+                        <strong>Original Size:</strong> 
+                        <span id="originalSize">Loading...</span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Current Effects:</strong> 
+                        <span id="effectsCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline (Bottom) -->
+    <div class="bg-dark border-top" style="height: 200px;">
+        <div class="p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="text-white mb-0">Timeline</h6>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-light" id="zoomInBtn">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="btn btn-outline-light" id="zoomOutBtn">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Timeline Canvas -->
+            <div class="position-relative" style="height: 150px; background: #1a1a1a; border-radius: 8px; overflow: hidden;">
+                <canvas id="timelineCanvas" style="width: 100%; height: 100%; cursor: pointer;"></canvas>
+                
+                <!-- Timeline Layers -->
+                <div class="position-absolute top-0 start-0 end-0" style="height: 30px; background: rgba(255,255,255,0.1);">
+                    <small class="text-white ms-2 lh-lg">Video</small>
+                </div>
+                <div class="position-absolute top-0 start-0 end-0" style="top: 35px; height: 30px; background: rgba(0,255,0,0.1);">
+                    <small class="text-white ms-2 lh-lg">Audio</small>
+                </div>
+                <div class="position-absolute top-0 start-0 end-0" style="top: 70px; height: 30px; background: rgba(255,255,0,0.1);">
+                    <small class="text-white ms-2 lh-lg">Text</small>
+                </div>
+                <div class="position-absolute top-0 start-0 end-0" style="top: 105px; height: 30px; background: rgba(255,0,255,0.1);">
+                    <small class="text-white ms-2 lh-lg">Effects</small>
+                </div>
+                
+                <!-- Playhead -->
+                <div id="playhead" class="position-absolute top-0 bottom-0" 
+                     style="left: 0; width: 2px; background: #ff0000; z-index: 10;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Modals -->
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Export Progress</label>
+                    <div class="progress">
+                        <div class="progress-bar" id="exportProgress" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted" id="exportStatus">Ready to export...</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Estimated File Size</label>
+                    <div class="alert alert-info" id="estimatedSize">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Calculating...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="startExportBtn">
+                    <i class="fas fa-download me-2"></i>Start Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload to YouTube</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Video Title</label>
+                    <input type="text" class="form-control" id="uploadTitle" 
+                           value="{{ short.title or 'Untitled Short' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" id="uploadDescription" rows="4">{{ short.description or '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tags</label>
+                    <input type="text" class="form-control" id="uploadTags" 
+                           value="{% if short.tags %}{{ short.tags | join(', ') }}{% else %}shorts, viral, trending, youtube{% endif %}"
+                           placeholder="shorts, viral, trending, youtube">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Privacy</label>
+                    <select class="form-select" id="uploadPrivacy">
+                        <option value="public">Public</option>
+                        <option value="unlisted">Unlisted</option>
+                        <option value="private">Private</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="startUploadBtn">
+                    <i class="fab fa-youtube me-2"></i>Upload to YouTube
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Real-time Video Editor -->
+<script>
+// Video Editor Application
+class VideoEditor {
+    constructor() {
+        this.canvas = document.getElementById('videoCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.timelineCanvas = document.getElementById('timelineCanvas');
+        this.timelineCtx = this.timelineCanvas.getContext('2d');
+        
+        this.shortId = {{ short.id }};
+        this.videoPath = "{{ url_for('download_short', short_id=short.id) }}";
+        this.duration = {{ short.duration or 0 }};
+        this.currentTime = 0;
+        this.isPlaying = false;
+        this.video = null;
+        this.isProcessing = false;
+        
+        // Effects state
+        this.currentEffects = {
+            color_grading: {
+                brightness: 1,
+                contrast: 1,
+                saturation: 1,
+                hue_shift: 0,
+                exposure: 0,
+                shadows: 0,
+                highlights: 0,
+                lut_preset: ''
+            },
+            viral_effect: {
+                type: '',
+                intensity: 1
+            },
+            background_blur: {
+                intensity: 0.5
+            },
+            face_filter: {
+                type: ''
+            },
+            text_overlays: []
+        };
+        
+        // History for undo/redo
+        this.history = [];
+        this.historyIndex = -1;
+        
+        this.init();
+    }
+
+    async init() {
+        await this.setupVideo();
+        this.setupCanvas();
+        this.setupTimeline();
+        this.setupEventListeners();
+        this.setupEffectsControls();
+        this.render();
+    }
+
+    async setupVideo() {
+        try {
+            this.video = document.createElement('video');
+            this.video.src = this.videoPath;
+            this.video.crossOrigin = 'anonymous';
+            this.video.muted = true;
+            this.video.loop = false;
+            
+            await new Promise((resolve, reject) => {
+                this.video.onloadedmetadata = () => {
+                    console.log('Video loaded successfully');
+                    resolve();
+                };
+                this.video.onerror = (e) => {
+                    console.error('Video load error:', e);
+                    reject(e);
+                };
+                
+                // Add timeout
+                setTimeout(() => reject(new Error('Video load timeout')), 10000);
+            });
+            
+            this.duration = this.video.duration || this.duration;
+            document.getElementById('totalTime').textContent = this.formatTime(this.duration);
+            
+            // Set up video time update listener
+            this.video.addEventListener('timeupdate', () => {
+                this.currentTime = this.video.currentTime;
+                this.updateTimeDisplay();
+            });
+            
+            console.log(`Video setup complete: ${this.duration}s duration`);
+            
+        } catch (error) {
+            console.error('Error loading video:', error);
+            this.showError('Failed to load video: ' + error.message);
+        }
+    }
+
+    setupCanvas() {
+        // Set canvas size to match video aspect ratio (9:16 for shorts)
+        const containerWidth = this.canvas.parentElement.clientWidth - 40;
+        const containerHeight = this.canvas.parentElement.clientHeight - 40;
+        
+        // Calculate size maintaining 9:16 aspect ratio
+        const aspectRatio = 9 / 16;
+        let canvasWidth = containerWidth;
+        let canvasHeight = containerWidth / aspectRatio;
+        
+        if (canvasHeight > containerHeight) {
+            canvasHeight = containerHeight;
+            canvasWidth = containerHeight * aspectRatio;
+        }
+        
+        this.canvas.width = canvasWidth;
+        this.canvas.height = canvasHeight;
+        this.canvas.style.width = canvasWidth + 'px';
+        this.canvas.style.height = canvasHeight + 'px';
+    }
+
+    setupTimeline() {
+        const container = this.timelineCanvas.parentElement;
+        this.timelineCanvas.width = container.clientWidth;
+        this.timelineCanvas.height = container.clientHeight;
+        
+        this.drawTimeline();
+    }
+
+    setupEventListeners() {
+        // Playback controls
+        document.getElementById('playPauseBtn').addEventListener('click', () => this.togglePlayPause());
+        document.getElementById('stopBtn').addEventListener('click', () => this.stop());
+        document.getElementById('videoProgress').addEventListener('input', (e) => this.seek(e.target.value));
+        
+        // Export and upload
+        document.getElementById('exportBtn').addEventListener('click', () => this.showExportModal());
+        document.getElementById('uploadBtn').addEventListener('click', () => this.showUploadModal());
+        
+        // Export modal handlers
+        document.getElementById('startExportBtn').addEventListener('click', () => this.startExport());
+        
+        // Upload modal handlers
+        document.getElementById('startUploadBtn').addEventListener('click', () => this.startUpload());
+        
+        // Undo/Redo
+        document.getElementById('undoBtn').addEventListener('click', () => this.undo());
+        document.getElementById('redoBtn').addEventListener('click', () => this.redo());
+        
+        // Timeline interaction
+        this.timelineCanvas.addEventListener('click', (e) => this.handleTimelineClick(e));
+        
+        // Window resize
+        window.addEventListener('resize', () => {
+            this.setupCanvas();
+            this.setupTimeline();
+        });
+    }
+
+    setupEffectsControls() {
+        // Color grading controls
+        const colorControls = ['brightness', 'contrast', 'saturation', 'hueShift', 'exposure', 'shadows', 'highlights'];
+        colorControls.forEach(control => {
+            const element = document.getElementById(control);
+            if (element) {
+                element.addEventListener('input', () => this.updateColorGrading());
+            }
+        });
+
+        document.getElementById('lutPreset').addEventListener('change', () => this.updateColorGrading());
+
+        // Viral effects
+        document.querySelectorAll('.effect-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.applyViralEffect(btn.dataset.effect));
+        });
+
+        document.getElementById('effectIntensity').addEventListener('input', () => this.updateEffectIntensity());
+
+        // Background blur
+        document.getElementById('backgroundBlurBtn').addEventListener('click', () => this.toggleBackgroundBlur());
+        document.getElementById('blurIntensity').addEventListener('input', () => this.updateBackgroundBlur());
+
+        // Face filters
+        document.querySelectorAll('.face-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.applyFaceFilter(btn.dataset.filter));
+        });
+
+        // Text overlays
+        document.getElementById('addTextBtn').addEventListener('click', () => this.addTextOverlay());
+        document.querySelectorAll('.text-template-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.applyTextTemplate(btn.dataset.template));
+        });
+
+        // Transitions
+        document.querySelectorAll('.transition-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.addTransition(btn.dataset.transition));
+        });
+
+        // Platform presets
+        document.querySelectorAll('.platform-preset').forEach(btn => {
+            btn.addEventListener('click', () => this.applyPlatformPreset(btn.dataset.platform));
+        });
+    }
+
+    updateColorGrading() {
+        this.currentEffects.color_grading = {
+            lut_preset: document.getElementById('lutPreset')?.value || '',
+            brightness: parseFloat(document.getElementById('brightness')?.value || 1),
+            contrast: parseFloat(document.getElementById('contrast')?.value || 1),
+            saturation: parseFloat(document.getElementById('saturation')?.value || 1),
+            hue_shift: parseFloat(document.getElementById('hueShift')?.value || 0),
+            exposure: parseFloat(document.getElementById('exposure')?.value || 0),
+            shadows: parseFloat(document.getElementById('shadows')?.value || 0),
+            highlights: parseFloat(document.getElementById('highlights')?.value || 0)
+        };
+        
+        this.saveState();
+        // Trigger immediate visual update
+        if (!this.isPlaying) {
+            this.processFrame();
+        }
+        console.log('Color grading updated:', this.currentEffects.color_grading);
+    }
+
+    applyViralEffect(effectType) {
+        // Toggle effect buttons
+        document.querySelectorAll('.effect-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // Find the button that was clicked
+        const clickedBtn = document.querySelector(`[data-effect="${effectType}"]`);
+        if (clickedBtn) {
+            clickedBtn.classList.add('active');
+        }
+        
+        this.currentEffects.viral_effect = {
+            type: effectType,
+            intensity: parseFloat(document.getElementById('effectIntensity')?.value || 1)
+        };
+        
+        this.saveState();
+        // Trigger immediate visual update
+        if (!this.isPlaying) {
+            this.processFrame();
+        }
+        console.log('Viral effect applied:', effectType);
+    }
+
+    updateEffectIntensity() {
+        if (this.currentEffects.viral_effect.type) {
+            this.currentEffects.viral_effect.intensity = parseFloat(document.getElementById('effectIntensity').value);
+            this.processFrame();
+        }
+    }
+
+    toggleBackgroundBlur() {
+        const isActive = document.getElementById('backgroundBlurBtn').classList.toggle('active');
+        
+        if (isActive) {
+            this.currentEffects.background_blur = {
+                intensity: parseFloat(document.getElementById('blurIntensity').value)
+            };
+        } else {
+            this.currentEffects.background_blur = {};
+        }
+        
+        this.saveState();
+        this.processFrame();
+    }
+
+    updateBackgroundBlur() {
+        if (Object.keys(this.currentEffects.background_blur).length > 0) {
+            this.currentEffects.background_blur.intensity = parseFloat(document.getElementById('blurIntensity').value);
+            this.processFrame();
+        }
+    }
+
+    applyFaceFilter(filterType) {
+        // Toggle face filter buttons
+        document.querySelectorAll('.face-filter-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.face-filter-btn').classList.add('active');
+        
+        this.currentEffects.face_filter = {
+            type: filterType
+        };
+        
+        this.saveState();
+        this.processFrame();
+    }
+
+    addTextOverlay() {
+        const textInput = document.getElementById('textContent');
+        const text = textInput?.value.trim();
+        if (!text) {
+            this.showNotification('Please enter text content', 'warning');
+            return;
+        }
+        
+        const textOverlay = {
+            text: text,
+            position: [
+                parseInt(document.getElementById('textX')?.value || 50),
+                parseInt(document.getElementById('textY')?.value || 50)
+            ],
+            font_size: parseFloat(document.getElementById('fontSize')?.value || 1),
+            color: this.hexToRgb(document.getElementById('textColor')?.value || '#ffffff'),
+            font_style: document.getElementById('fontStyle')?.value || 'normal'
+        };
+        
+        this.currentEffects.text_overlays.push(textOverlay);
+        
+        // Clear form
+        if (textInput) textInput.value = '';
+        
+        this.saveState();
+        // Trigger immediate visual update
+        if (!this.isPlaying) {
+            this.processFrame();
+        }
+        this.updateEffectsCount();
+        
+        this.showNotification('Text overlay added', 'success');
+        console.log('Text overlay added:', textOverlay);
+    }
+
+    applyTextTemplate(template) {
+        const templates = {
+            trending: { text: "This is trending! 🔥", color: [255, 255, 0] },
+            follow: { text: "Follow for more! 👆", color: [255, 255, 255] },
+            viral: { text: "Going viral! 🚀", color: [255, 100, 100] }
+        };
+        
+        if (templates[template]) {
+            document.getElementById('textContent').value = templates[template].text;
+            document.getElementById('textColor').value = this.rgbToHex(templates[template].color);
+        }
+    }
+
+    addTransition(transitionType) {
+        // For now, just show feedback - full implementation would require timeline support
+        this.showNotification(`${transitionType} transition added to timeline`, 'info');
+    }
+
+    applyPlatformPreset(platform) {
+        const presets = {
+            youtube: { resolution: '1080x1920', format: 'mp4', quality: 'high' },
+            tiktok: { resolution: '1080x1920', format: 'mp4', quality: 'medium' },
+            instagram: { resolution: '1080x1920', format: 'mp4', quality: 'high' },
+            facebook: { resolution: '1080x1920', format: 'mp4', quality: 'medium' }
+        };
+        
+        const preset = presets[platform];
+        if (preset) {
+            document.getElementById('exportResolution').value = preset.resolution;
+            document.getElementById('exportFormat').value = preset.format;
+            document.getElementById('exportQuality').value = preset.quality;
+            
+            this.showNotification(`Applied ${platform} preset`, 'success');
+        }
+    }
+
+    async processFrame() {
+        if (!this.video || this.isProcessing) return;
+        
+        this.isProcessing = true;
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const processingText = document.getElementById('processingText');
+        
+        try {
+            // Apply effects directly in browser for real-time preview
+            this.applyEffectsDirectly();
+            
+            // For complex effects, use backend processing (optional)
+            if (this.needsBackendProcessing()) {
+                loadingOverlay.classList.remove('d-none');
+                processingText.textContent = 'Applying advanced effects...';
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = this.video.videoWidth || 1080;
+                canvas.height = this.video.videoHeight || 1920;
+                
+                ctx.drawImage(this.video, 0, 0);
+                const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                
+                const response = await fetch('/api/process-frame', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        frame_data: imageData,
+                        effects: this.currentEffects,
+                        timestamp: this.currentTime
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    const img = new Image();
+                    img.onload = () => {
+                        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                        this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+                    };
+                    img.src = result.processed_frame;
+                }
+            }
+            
+        } catch (error) {
+            console.error('Error processing frame:', error);
+            this.showError('Failed to apply effects: ' + error.message);
+        } finally {
+            loadingOverlay.classList.add('d-none');
+            processingText.textContent = 'Ready for editing';
+            this.isProcessing = false;
+        }
+    }
+
+    applyEffectsDirectly() {
+        if (!this.video) return;
+        
+        // Clear canvas and draw base video frame
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.save();
+        
+        // Apply color grading effects
+        this.applyColorGradingToCanvas();
+        
+        // Draw video frame
+        this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+        
+        // Apply overlay effects
+        this.applyOverlayEffects();
+        
+        // Add text overlays
+        this.applyTextOverlays();
+        
+        this.ctx.restore();
+    }
+
+    applyColorGradingToCanvas() {
+        const effects = this.currentEffects.color_grading;
+        
+        // Apply brightness/contrast using canvas filters
+        let filterString = '';
+        
+        if (effects.brightness !== 1) {
+            filterString += `brightness(${effects.brightness * 100}%) `;
+        }
+        
+        if (effects.contrast !== 1) {
+            filterString += `contrast(${effects.contrast * 100}%) `;
+        }
+        
+        if (effects.saturation !== 1) {
+            filterString += `saturate(${effects.saturation * 100}%) `;
+        }
+        
+        if (effects.hue_shift !== 0) {
+            filterString += `hue-rotate(${effects.hue_shift}deg) `;
+        }
+        
+        if (filterString) {
+            this.ctx.filter = filterString.trim();
+        }
+    }
+
+    applyOverlayEffects() {
+        const viralEffect = this.currentEffects.viral_effect;
+        
+        if (viralEffect.type === 'tiktok_glow') {
+            this.applyGlowEffect(viralEffect.intensity);
+        } else if (viralEffect.type === 'vhs_retro') {
+            this.applyVHSEffect(viralEffect.intensity);
+        } else if (viralEffect.type === 'glitch') {
+            this.applyGlitchEffect(viralEffect.intensity);
+        }
+    }
+
+    applyGlowEffect(intensity) {
+        this.ctx.globalCompositeOperation = 'screen';
+        this.ctx.shadowColor = 'rgba(255, 255, 255, ' + (0.3 * intensity) + ')';
+        this.ctx.shadowBlur = 20 * intensity;
+        this.ctx.globalCompositeOperation = 'source-over';
+    }
+
+    applyVHSEffect(intensity) {
+        // Add scanlines
+        this.ctx.globalAlpha = 0.1 * intensity;
+        this.ctx.fillStyle = '#000000';
+        
+        for (let i = 0; i < this.canvas.height; i += 4) {
+            this.ctx.fillRect(0, i, this.canvas.width, 2);
+        }
+        
+        this.ctx.globalAlpha = 1;
+    }
+
+    applyGlitchEffect(intensity) {
+        // Simple color channel shift effect
+        const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        const data = imageData.data;
+        const shift = Math.floor(5 * intensity);
+        
+        for (let i = 0; i < data.length; i += 4) {
+            if (Math.random() < 0.01 * intensity) {
+                // Randomly shift red channel
+                const targetIndex = Math.min(data.length - 4, i + shift * 4);
+                data[targetIndex] = data[i]; // Red channel
+            }
+        }
+        
+        this.ctx.putImageData(imageData, 0, 0);
+    }
+
+    applyTextOverlays() {
+        this.currentEffects.text_overlays.forEach(textOverlay => {
+            this.ctx.font = `${textOverlay.font_style || 'normal'} ${(textOverlay.font_size || 1) * 24}px Arial`;
+            this.ctx.fillStyle = `rgb(${textOverlay.color.join(',')})`;
+            this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+            this.ctx.lineWidth = 2;
+            
+            const x = (textOverlay.position[0] / 100) * this.canvas.width;
+            const y = (textOverlay.position[1] / 100) * this.canvas.height;
+            
+            // Draw text with outline
+            this.ctx.strokeText(textOverlay.text, x, y);
+            this.ctx.fillText(textOverlay.text, x, y);
+        });
+    }
+
+    needsBackendProcessing() {
+        // Use backend for complex effects like face filters and advanced color grading
+        return this.currentEffects.face_filter.type || 
+               this.currentEffects.background_blur.intensity > 0 ||
+               this.currentEffects.color_grading.lut_preset;
+    }
+
+    render() {
+        if (!this.video) return;
+        
+        // Apply effects and draw frame
+        this.processFrame();
+        
+        // Update time display
+        this.updateTimeDisplay();
+        
+        // Update timeline playhead
+        this.updatePlayhead();
+        
+        if (this.isPlaying) {
+            requestAnimationFrame(() => this.render());
+        }
+    }
+
+    updateTimeDisplay() {
+        document.getElementById('currentTime').textContent = this.formatTime(this.currentTime);
+        
+        // Update progress bar
+        const progress = this.duration > 0 ? (this.currentTime / this.duration) * 100 : 0;
+        document.getElementById('videoProgress').value = progress;
+    }
+
+    togglePlayPause() {
+        if (!this.video) return;
+        
+        if (this.isPlaying) {
+            this.pause();
+        } else {
+            this.play();
+        }
+    }
+
+    play() {
+        if (!this.video) return;
+        
+        this.isPlaying = true;
+        this.video.play();
+        document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-pause"></i>';
+        
+        // Start render loop
+        this.render();
+        
+        // Update current time
+        this.updateTimeInterval = setInterval(() => {
+            this.currentTime = this.video.currentTime;
+        }, 16); // ~60fps
+    }
+
+    pause() {
+        this.isPlaying = false;
+        if (this.video) this.video.pause();
+        document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
+        
+        if (this.updateTimeInterval) {
+            clearInterval(this.updateTimeInterval);
+        }
+    }
+
+    stop() {
+        this.pause();
+        this.currentTime = 0;
+        if (this.video) this.video.currentTime = 0;
+        this.render();
+    }
+
+    seek(percentage) {
+        const time = (percentage / 100) * this.duration;
+        this.currentTime = time;
+        if (this.video) this.video.currentTime = time;
+        this.render();
+    }
+
+    drawTimeline() {
+        const ctx = this.timelineCtx;
+        const width = this.timelineCanvas.width;
+        const height = this.timelineCanvas.height;
+        
+        ctx.clearRect(0, 0, width, height);
+        
+        // Draw time markers
+        const timeSteps = Math.max(1, Math.floor(this.duration / 10));
+        for (let i = 0; i <= this.duration; i += timeSteps) {
+            const x = (i / this.duration) * width;
+            
+            ctx.strokeStyle = '#666';
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#ccc';
+            ctx.font = '10px Arial';
+            ctx.fillText(this.formatTime(i), x + 2, 12);
+        }
+        
+        // Draw video track
+        ctx.fillStyle = 'rgba(100, 150, 255, 0.3)';
+        ctx.fillRect(0, 35, width, 25);
+        
+        // Draw effect blocks
+        ctx.fillStyle = 'rgba(255, 100, 100, 0.5)';
+        ctx.fillRect(0, 105, width, 25);
+    }
+
+    updatePlayhead() {
+        const timelineContainer = this.timelineCanvas.parentElement;
+        const playhead = document.getElementById('playhead');
+        const position = (this.currentTime / this.duration) * 100;
+        playhead.style.left = position + '%';
+    }
+
+    handleTimelineClick(event) {
+        const rect = this.timelineCanvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const percentage = (x / this.timelineCanvas.width) * 100;
+        this.seek(percentage);
+    }
+
+    saveState() {
+        // Save current state for undo/redo
+        const state = JSON.parse(JSON.stringify(this.currentEffects));
+        this.history = this.history.slice(0, this.historyIndex + 1);
+        this.history.push(state);
+        this.historyIndex++;
+        
+        // Limit history size
+        if (this.history.length > 50) {
+            this.history.shift();
+            this.historyIndex--;
+        }
+        
+        this.updateUndoRedoButtons();
+    }
+
+    undo() {
+        if (this.historyIndex > 0) {
+            this.historyIndex--;
+            this.currentEffects = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
+            this.updateControlsFromState();
+            this.processFrame();
+            this.updateUndoRedoButtons();
+        }
+    }
+
+    redo() {
+        if (this.historyIndex < this.history.length - 1) {
+            this.historyIndex++;
+            this.currentEffects = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
+            this.updateControlsFromState();
+            this.processFrame();
+            this.updateUndoRedoButtons();
+        }
+    }
+
+    updateUndoRedoButtons() {
+        document.getElementById('undoBtn').disabled = this.historyIndex <= 0;
+        document.getElementById('redoBtn').disabled = this.historyIndex >= this.history.length - 1;
+    }
+
+    updateControlsFromState() {
+        // Update UI controls to match current state
+        const colorGrading = this.currentEffects.color_grading;
+        if (colorGrading) {
+            Object.keys(colorGrading).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) element.value = colorGrading[key];
+            });
+        }
+        
+        // Update effect buttons
+        document.querySelectorAll('.effect-btn').forEach(btn => btn.classList.remove('active'));
+        if (this.currentEffects.viral_effect.type) {
+            const activeBtn = document.querySelector(`[data-effect="${this.currentEffects.viral_effect.type}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+        
+        this.updateEffectsCount();
+    }
+
+    updateEffectsCount() {
+        let count = 0;
+        if (Object.keys(this.currentEffects.color_grading).length > 0) count++;
+        if (Object.keys(this.currentEffects.viral_effect).length > 0) count++;
+        if (Object.keys(this.currentEffects.background_blur).length > 0) count++;
+        if (Object.keys(this.currentEffects.face_filter).length > 0) count++;
+        count += this.currentEffects.text_overlays.length;
+        
+        document.getElementById('effectsCount').textContent = count;
+    }
+
+    showExportModal() {
+        const modal = new bootstrap.Modal(document.getElementById('exportModal'));
+        modal.show();
+        
+        // Calculate estimated file size
+        this.calculateEstimatedFileSize();
+    }
+
+    showUploadModal() {
+        const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+        modal.show();
+    }
+    
+    async startExport() {
+        try {
+            const exportBtn = document.getElementById('startExportBtn');
+            const progressBar = document.getElementById('exportProgress');
+            const statusText = document.getElementById('exportStatus');
+            
+            // Disable export button
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
+            
+            // Update status
+            statusText.textContent = 'Starting export...';
+            progressBar.style.width = '10%';
+            
+            // Get export settings
+            const settings = {
+                format: document.getElementById('exportFormat').value,
+                resolution: document.getElementById('exportResolution').value,
+                quality: document.getElementById('exportQuality').value
+            };
+            
+            // Collect all applied effects
+            const effectsTimeline = this.buildEffectsTimeline();
+            
+            // Send export request
+            const response = await fetch('/api/export-video', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    short_id: this.shortId,
+                    settings: settings,
+                    effects_timeline: effectsTimeline
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'processing') {
+                statusText.textContent = 'Processing video with effects...';
+                progressBar.style.width = '50%';
+                
+                // Poll for completion
+                this.pollExportProgress();
+                
+            } else if (result.status === 'success') {
+                // No effects applied, immediate download
+                progressBar.style.width = '100%';
+                statusText.textContent = 'Export completed!';
+                
+                // Trigger download
+                const downloadLink = document.createElement('a');
+                downloadLink.href = result.download_url;
+                downloadLink.click();
+                
+                // Close modal after delay
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+                    this.resetExportModal();
+                }, 2000);
+                
+            } else {
+                throw new Error(result.message || 'Export failed');
+            }
+            
+        } catch (error) {
+            console.error('Export failed:', error);
+            this.showNotification('Export failed: ' + error.message, 'error');
+            this.resetExportModal();
+        }
+    }
+    
+    buildEffectsTimeline() {
+        const timeline = [];
+        
+        // Add color grading effects
+        const colorGrading = this.currentEffects.color_grading;
+        if (colorGrading.brightness !== 1) {
+            timeline.push({
+                name: 'brightness',
+                params: { intensity: colorGrading.brightness }
+            });
+        }
+        
+        if (colorGrading.contrast !== 1) {
+            timeline.push({
+                name: 'contrast',
+                params: { intensity: colorGrading.contrast }
+            });
+        }
+        
+        if (colorGrading.saturation !== 1) {
+            timeline.push({
+                name: 'saturation',
+                params: { intensity: colorGrading.saturation }
+            });
+        }
+        
+        // Add viral effects
+        const viralEffect = this.currentEffects.viral_effect;
+        if (viralEffect.type) {
+            timeline.push({
+                name: viralEffect.type,
+                params: { intensity: viralEffect.intensity }
+            });
+        }
+        
+        return timeline;
+    }
+    
+    async pollExportProgress() {
+        const progressBar = document.getElementById('exportProgress');
+        const statusText = document.getElementById('exportStatus');
+        
+        let progress = 50;
+        const interval = setInterval(() => {
+            progress += Math.random() * 10;
+            if (progress > 90) progress = 90;
+            
+            progressBar.style.width = progress + '%';
+            statusText.textContent = `Processing... ${Math.round(progress)}%`;
+        }, 1000);
+        
+        // Simulated completion after 15 seconds
+        setTimeout(() => {
+            clearInterval(interval);
+            progressBar.style.width = '100%';
+            statusText.textContent = 'Export completed! Starting download...';
+            
+            // Trigger download
+            const downloadUrl = `/download_short/${this.shortId}`;
+            const downloadLink = document.createElement('a');
+            downloadLink.href = downloadUrl;
+            downloadLink.download = `short_${this.shortId}_edited.mp4`;
+            downloadLink.click();
+            
+            // Close modal
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+                this.resetExportModal();
+            }, 2000);
+            
+        }, 15000);
+    }
+    
+    resetExportModal() {
+        const exportBtn = document.getElementById('startExportBtn');
+        const progressBar = document.getElementById('exportProgress');
+        const statusText = document.getElementById('exportStatus');
+        
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = '<i class="fas fa-download me-2"></i>Start Export';
+        progressBar.style.width = '0%';
+        statusText.textContent = 'Ready to export...';
+    }
+    
+    calculateEstimatedFileSize() {
+        // Simple estimation based on duration and quality
+        const duration = this.duration || 60;
+        const quality = document.getElementById('exportQuality').value;
+        
+        let bitrate;
+        switch (quality) {
+            case 'high': bitrate = 8; break;
+            case 'medium': bitrate = 4; break;
+            case 'low': bitrate = 2; break;
+            default: bitrate = 4;
+        }
+        
+        const estimatedMB = (duration * bitrate * 0.125).toFixed(1);
+        document.getElementById('estimatedSize').innerHTML = 
+            `<i class="fas fa-info-circle me-2"></i>~${estimatedMB} MB`;
+    }
+    
+    async startUpload() {
+        try {
+            const uploadBtn = document.getElementById('startUploadBtn');
+            
+            // Get upload data
+            const uploadData = {
+                title: document.getElementById('uploadTitle').value,
+                description: document.getElementById('uploadDescription').value,
+                tags: document.getElementById('uploadTags').value,
+                privacy: document.getElementById('uploadPrivacy').value
+            };
+            
+            // Validate required fields
+            if (!uploadData.title.trim()) {
+                this.showNotification('Please enter a video title', 'error');
+                return;
+            }
+            
+            // Disable upload button
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+            
+            // First check if YouTube account is connected
+            const authResponse = await fetch('/api/youtube/status');
+            const authResult = await authResponse.json();
+            
+            if (!authResult.connected) {
+                // No YouTube account connected, redirect to connect
+                this.showNotification('Please connect your YouTube account first', 'warning');
+                window.location.href = '/youtube/auth';
+                return;
+            }
+            
+            // Start upload process
+            const response = await fetch(`/api/upload/${this.shortId}/youtube`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(uploadData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                this.showNotification('Video uploaded successfully to YouTube!', 'success');
+                
+                // Close modal after delay
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+                    this.resetUploadModal();
+                }, 2000);
+                
+            } else if (result.status === 'processing') {
+                this.showNotification('Upload started. This may take a few minutes...', 'info');
+                this.pollUploadProgress();
+                
+            } else {
+                throw new Error(result.message || 'Upload failed');
+            }
+            
+        } catch (error) {
+            console.error('Upload failed:', error);
+            this.showNotification('Upload failed: ' + error.message, 'error');
+            this.resetUploadModal();
+        }
+    }
+    
+    async pollUploadProgress() {
+        let attempts = 0;
+        const maxAttempts = 30; // 5 minutes max
+        
+        const interval = setInterval(async () => {
+            attempts++;
+            
+            try {
+                const response = await fetch(`/api/upload/status/${this.shortId}`);
+                const result = await response.json();
+                
+                if (result.status === 'completed') {
+                    clearInterval(interval);
+                    this.showNotification('Video uploaded successfully to YouTube!', 'success');
+                    
+                    // Close modal
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+                        this.resetUploadModal();
+                    }, 2000);
+                    
+                } else if (result.status === 'failed') {
+                    clearInterval(interval);
+                    this.showNotification('Upload failed: ' + result.error, 'error');
+                    this.resetUploadModal();
+                    
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(interval);
+                    this.showNotification('Upload timed out. Please check your YouTube channel.', 'warning');
+                    this.resetUploadModal();
+                }
+                
+            } catch (error) {
+                console.error('Error checking upload status:', error);
+            }
+            
+        }, 10000); // Check every 10 seconds
+    }
+    
+    resetUploadModal() {
+        const uploadBtn = document.getElementById('startUploadBtn');
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<i class="fab fa-youtube me-2"></i>Upload to YouTube';
+    }
+
+    formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? [
+            parseInt(result[1], 16),
+            parseInt(result[2], 16),
+            parseInt(result[3], 16)
+        ] : [255, 255, 255];
+    }
+
+    rgbToHex(rgb) {
+        return "#" + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
+    }
+
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const alertClass = type === 'success' ? 'alert-success' : 
+                          type === 'error' ? 'alert-danger' : 
+                          type === 'warning' ? 'alert-warning' : 'alert-info';
+        
+        const notification = document.createElement('div');
+        notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : type === 'warning' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+        
+        // Handle manual close
+        const closeBtn = notification.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => notification.remove());
+        }
+    }
+
+    showError(message) {
+        this.showNotification(message, 'error');
+    }
+}
+
+// Initialize the video editor when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    window.videoEditor = new VideoEditor();
+});
+</script>
+
+<style>
+/* Additional styles for video editor */
+#videoEditor {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.effect-btn.active,
+.face-filter-btn.active {
+    background-color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+    color: white !important;
+}
+
+#backgroundBlurBtn.active {
+    background-color: var(--bs-secondary) !important;
+    border-color: var(--bs-secondary) !important;
+    color: white !important;
+}
+
+.form-range {
+    accent-color: var(--bs-primary);
+}
+
+#timelineCanvas {
+    cursor: pointer;
+}
+
+#timelineCanvas:hover {
+    opacity: 0.9;
+}
+
+#playhead {
+    cursor: pointer;
+    transition: left 0.1s ease;
+}
+
+.platform-preset:hover {
+    transform: translateY(-1px);
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .col-md-3 {
+        display: none;
+    }
+    
+    .col-md-6 {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+    
+    .btn-sm {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .btn-group-sm > .btn {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+}
+</style>
+{% endblock %}

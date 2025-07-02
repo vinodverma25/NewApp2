@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}YouTube Shorts Generator - Create Viral Shorts with AI{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Hero Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-magic me-3 text-primary"></i>
+                AI-Powered YouTube Shorts Generator
+            </h1>
+            <p class="lead mb-4">
+                Transform any YouTube video into engaging vertical shorts with the power of Gemini AI.
+                Automatic content analysis, vertical cropping, and metadata generation.
+            </p>
+
+            {% if not youtube_connected %}
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Connect your YouTube account to enable automatic uploads to your channel.
+                    <a href="{{ url_for('youtube_accounts') }}" class="alert-link">Connect YouTube</a>
+                </div>
+            {% endif %}
+
+            <!-- Video URL Input Form -->
+            <div class="card glass-card mb-4">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('submit_video') }}" id="videoForm">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fab fa-youtube text-danger"></i>
+                                    </span>
+                                    <input type="url" 
+                                           class="form-control form-control-lg" 
+                                           name="youtube_url" 
+                                           id="youtube_url"
+                                           placeholder="Paste YouTube video URL here..." 
+                                           required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-rocket me-2"></i>
+                                    Generate Shorts
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Advanced Options Toggle -->
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                    data-bs-toggle="collapse" data-bs-target="#advancedOptions">
+                                <i class="fas fa-cog me-1"></i>
+                                Advanced Options
+                            </button>
+                        </div>
+
+                        <!-- Advanced Options Panel -->
+                        <div class="collapse mt-3" id="advancedOptions">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Video Quality</label>
+                                    <select class="form-select" name="video_quality" id="video_quality">
+                                        <option value="480p">480p SD</option>
+                                        <option value="720p HD">720p HD</option>
+                                        <option value="1080p Full HD" selected>1080p Full HD</option>
+                                        <option value="1440p 2K" disabled>1440p 2K (Checking...)</option>
+                                        <option value="2160p 4K" disabled>2160p 4K (Checking...)</option>
+                                    </select>
+                                    <small class="form-text text-muted">Higher qualities available if supported by video</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Language</label>
+                                    <select class="form-select" name="language">
+                                        <option value="hinglish" selected>Hinglish</option>
+                                        <option value="english">English</option>
+                                        <option value="hindi">Hindi</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Short Length (seconds)</label>
+                                    <input type="number" class="form-control" name="short_length" 
+                                           value="60" min="15" max="60">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Number of Shorts</label>
+                                    <input type="number" class="form-control" name="num_shorts" 
+                                           value="3" min="1" max="10">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-video fa-2x text-primary mb-2"></i>
+                    <h4 class="mb-1">{{ recent_jobs or 0 }}</h4>
+                    <p class="text-muted mb-0">Videos Processed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-mobile-alt fa-2x text-success mb-2"></i>
+                    <h4 class="mb-1">{{ total_shorts or 0 }}</h4>
+                    <p class="text-muted mb-0">Shorts Generated</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card text-center">
+                <div class="card-body">
+                    <i class="fas fa-robot fa-2x text-info mb-2"></i>
+                    <h4 class="mb-1">AI-Powered</h4>
+                    <p class="text-muted mb-0">Gemini Analysis</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="text-center mb-4">
+                <i class="fas fa-star me-2"></i>
+                Powerful Features
+            </h2>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card feature-card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-brain fa-3x text-primary"></i>
+                    </div>
+                    <h5>AI Content Analysis</h5>
+                    <p class="text-muted">
+                        Gemini AI analyzes your video content to identify the most engaging segments 
+                        for short-form content creation.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card feature-card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-crop-alt fa-3x text-success"></i>
+                    </div>
+                    <h5>Smart Vertical Cropping</h5>
+                    <p class="text-muted">
+                        Automatically converts horizontal videos to vertical format optimized 
+                        for YouTube Shorts, TikTok, and Instagram Reels.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card feature-card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-upload fa-3x text-info"></i>
+                    </div>
+                    <h5>Auto YouTube Upload</h5>
+                    <p class="text-muted">
+                        Seamlessly upload generated shorts directly to your YouTube channel 
+                        with optimized titles, descriptions, and tags.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="text-center mb-4">
+                <i class="fas fa-cogs me-2"></i>
+                How It Works
+            </h2>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="text-center">
+                <div class="step-number mb-3">1</div>
+                <h5>Paste URL</h5>
+                <p class="text-muted">Simply paste any YouTube video URL into the input field above.</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="text-center">
+                <div class="step-number mb-3">2</div>
+                <h5>AI Analysis</h5>
+                <p class="text-muted">Our AI analyzes the video content and identifies engaging segments.</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="text-center">
+                <div class="step-number mb-3">3</div>
+                <h5>Generate Shorts</h5>
+                <p class="text-muted">Automatically create vertical shorts with optimized formatting.</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="text-center">
+                <div class="step-number mb-3">4</div>
+                <h5>Upload & Share</h5>
+                <p class="text-muted">Download or directly upload to your YouTube channel.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Management Section -->
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12 text-center">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <h6 class="card-title text-warning">
+                        <i class="fas fa-database me-2"></i>
+                        Data Management
+                    </h6>
+                    <p class="card-text small text-muted mb-3">
+                        Videos and files are now preserved after upload. Clear all data when you need to free up storage space.
+                    </p>
+                    <form method="POST" action="{{ url_for('clear_all_data') }}" class="d-inline">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                onclick="return confirm('⚠️ This will delete ALL data, videos, and jobs permanently. Are you absolutely sure?')">
+                            <i class="fas fa-eraser me-1"></i>
+                            Clear All Data
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('videoForm').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    submitBtn.disabled = true;
+    
+    // Re-enable button after 3 seconds if form submission fails
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 3000);
+});
+
+// URL validation and quality checking
+document.getElementById('youtube_url').addEventListener('input', function() {
+    const url = this.value;
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/|m\.youtube\.com\/watch\?v=)[\w-]+/;
+    
+    if (url && !youtubeRegex.test(url)) {
+        this.setCustomValidity('Please enter a valid YouTube URL');
+        resetQualityOptions();
+    } else {
+        this.setCustomValidity('');
+        if (url && youtubeRegex.test(url)) {
+            checkAvailableQualities(url);
+        } else {
+            resetQualityOptions();
+        }
+    }
+});
+
+function resetQualityOptions() {
+    const qualitySelect = document.getElementById('video_quality');
+    // Reset to default options with checking status
+    qualitySelect.innerHTML = `
+        <option value="720p HD">720p HD (Checking...)</option>
+        <option value="1080p Full HD" selected>1080p Full HD (Checking...)</option>
+        <option value="1440p 2K" disabled>1440p 2K (Checking...)</option>
+        <option value="2160p 4K" disabled>2160p 4K (Checking...)</option>
+    `;
+}
+
+function checkAvailableQualities(url) {
+    const qualitySelect = document.getElementById('video_quality');
+    
+    // Show checking status
+    resetQualityOptions();
+    
+    // Check available qualities via AJAX
+    fetch('/check-video-qualities', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ youtube_url: url })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Clear and rebuild quality options based on actual availability
+        qualitySelect.innerHTML = '';
+        
+        if (data.qualities && data.qualities.length > 0) {
+            data.qualities.forEach(quality => {
+                const option = document.createElement('option');
+                option.value = quality;
+                option.textContent = quality;
+                option.disabled = false;
+                
+                // Select 1080p Full HD as default, or first available if not present
+                if (quality === '1080p Full HD' || (qualitySelect.children.length === 0 && quality.includes('1080p'))) {
+                    option.selected = true;
+                }
+                
+                qualitySelect.appendChild(option);
+            });
+        } else {
+            // Fallback if no qualities detected
+            qualitySelect.innerHTML = `
+                <option value="720p HD">720p HD</option>
+                <option value="1080p Full HD" selected>1080p Full HD</option>
+                <option value="1440p 2K">1440p 2K</option>
+                <option value="2160p 4K">2160p 4K</option>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error checking video qualities:', error);
+        // Show error state but still allow selection
+        qualitySelect.innerHTML = `
+            <option value="720p HD">720p HD (Error - Will Try)</option>
+            <option value="1080p Full HD" selected>1080p Full HD (Error - Will Try)</option>
+            <option value="1440p 2K">1440p 2K (Error - Will Try)</option>
+            <option value="2160p 4K">2160p 4K (Error - Will Try)</option>
+        `;
+    });
+}
+</script>
+{% endblock %}

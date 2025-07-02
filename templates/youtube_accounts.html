@@ -1,0 +1,96 @@
+
+{% extends "base.html" %}
+
+{% block title %}Manage YouTube Accounts{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fab fa-youtube text-danger me-2"></i>
+                        YouTube Accounts
+                    </h5>
+                    <a href="{{ url_for('youtube_auth') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Account
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if accounts %}
+                        <div class="row">
+                            {% for account in accounts %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card {% if account.is_primary %}border-primary{% endif %}">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            {% if account.channel_thumbnail %}
+                                            <img src="{{ account.channel_thumbnail }}" 
+                                                 alt="{{ account.channel_title }}" 
+                                                 class="rounded-circle me-3" 
+                                                 width="50" height="50">
+                                            {% else %}
+                                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-3" 
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="fab fa-youtube text-white"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-1">{{ account.channel_title or 'YouTube Channel' }}</h6>
+                                                <small class="text-muted">{{ account.user_email }}</small>
+                                                {% if account.is_primary %}
+                                                <br><span class="badge bg-primary">Primary</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex gap-2">
+                                            {% if not account.is_primary %}
+                                            <form method="POST" action="{{ url_for('set_primary_account', account_id=account.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                                    Set as Primary
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                            
+                                            <form method="POST" action="{{ url_for('youtube_disconnect_account', account_id=account.id) }}" 
+                                                  class="d-inline" onsubmit="return confirm('Are you sure you want to disconnect this account?')">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    <i class="fas fa-unlink me-1"></i>Disconnect
+                                                </button>
+                                            </form>
+                                        </div>
+                                        
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                Connected: {{ account.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fab fa-youtube fa-3x text-muted mb-3"></i>
+                            <h5>No YouTube Accounts Connected</h5>
+                            <p class="text-muted">Connect your YouTube accounts to upload shorts automatically.</p>
+                            <a href="{{ url_for('youtube_auth') }}" class="btn btn-primary">
+                                <i class="fab fa-youtube me-1"></i>Connect YouTube Account
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-3 text-center">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

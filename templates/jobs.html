@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block title %}Processing Jobs - YouTube Shorts Generator{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="gradient-text mb-1">
+                <i class="fas fa-tasks me-2"></i>
+                Processing Jobs
+            </h2>
+            <p class="text-muted mb-0">Monitor your video processing jobs and download results</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button id="refreshBtn" class="btn btn-outline-secondary" title="Refresh Jobs">
+                <i class="fas fa-sync-alt me-1"></i>
+                <span class="d-none d-sm-inline">Refresh</span>
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>New Job
+            </a>
+            <div class="dropdown">
+                <button class="btn btn-outline-warning dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-cog me-1"></i>
+                    <span class="d-none d-sm-inline">Manage</span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" href="{{ url_for('cleanup_storage') }}">
+                            <i class="fas fa-broom me-2"></i>Cleanup Storage
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <button class="dropdown-item" onclick="deleteCompletedJobs()">
+                            <i class="fas fa-trash me-2"></i>Delete Completed
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <h4 class="text-primary mb-1">{{ jobs | selectattr('status.value', 'equalto', 'completed') | list | length }}</h4>
+                    <small class="text-muted">Completed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <h4 class="text-info mb-1">{{ jobs | selectattr('status.value', 'in', ['pending', 'downloading', 'transcribing', 'analyzing', 'editing']) | list | length }}</h4>
+                    <small class="text-muted">Processing</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <h4 class="text-danger mb-1">{{ jobs | selectattr('status.value', 'equalto', 'failed') | list | length }}</h4>
+                    <small class="text-muted">Failed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center">
+                <div class="card-body py-3">
+                    <h4 class="text-success mb-1">{{ jobs | map(attribute='shorts') | map('length') | sum }}</h4>
+                    <small class="text-muted">Shorts Generated</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Jobs Grid -->
+    {% if jobs %}
+        <div class="row" id="jobsContainer">
+            {% for job in jobs %}
+                <div class="col-md-6 col-xl-4 mb-4 job-card" data-job-id="{{ job.id }}" data-status="{{ job.status.value }}">
+                    <div class="card h-100 position-relative">
+                        <!-- Status Indicator -->
+                        <div class="position-absolute top-0 end-0 m-3">
+                            {% if job.status.value == 'pending' %}
+                                <span class="badge bg-warning loading-pulse">
+                                    <i class="fas fa-clock me-1"></i>Pending
+                                </span>
+                            {% elif job.status.value == 'downloading' %}
+                                <span class="badge bg-info loading-pulse">
+                                    <i class="fas fa-download me-1"></i>Downloading
+                                </span>
+                            {% elif job.status.value == 'transcribing' %}
+                                <span class="badge bg-primary loading-pulse">
+                                    <i class="fas fa-microphone me-1"></i>Transcribing
+                                </span>
+                            {% elif job.status.value == 'analyzing' %}
+                                <span class="badge bg-secondary loading-pulse">
+                                    <i class="fas fa-robot me-1"></i>AI Analyzing
+                                </span>
+                            {% elif job.status.value == 'editing' %}
+                                <span class="badge bg-info loading-pulse">
+                                    <i class="fas fa-video me-1"></i>Creating Shorts
+                                </span>
+                            {% elif job.status.value == 'completed' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>Completed
+                                </span>
+                            {% elif job.status.value == 'failed' %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle me-1"></i>Failed
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Title and YouTube Link -->
+                            <div class="d-flex align-items-start mb-3">
+                                <i class="fab fa-youtube text-danger me-2 mt-1 flex-shrink-0"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="card-title mb-1">
+                                        {{ job.title or 'Processing...' }}
+                                    </h6>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ job.created_at.strftime('%b %d, %Y at %H:%M') }}
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar for Active Jobs -->
+                            {% if job.status.value not in ['completed', 'failed'] %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="text-muted">Progress</small>
+                                        <small class="text-muted">{{ job.progress }}%</small>
+                                    </div>
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar progress-bar-animated" 
+                                             style="width: {{ job.progress }}%"
+                                             data-progress="{{ job.progress }}"></div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- Job Details -->
+                            <div class="row g-2 mb-3">
+                                {% if job.duration %}
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-clock text-muted me-2"></i>
+                                            <small class="text-muted">{{ (job.duration // 60) }}m {{ (job.duration % 60) }}s</small>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if job.shorts %}
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-video text-success me-2"></i>
+                                            <small class="text-success">{{ job.shorts|length }} short(s)</small>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-language text-muted me-2"></i>
+                                        <small class="text-muted">{{ job.language.title() }}</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-film text-muted me-2"></i>
+                                        <small class="text-muted">{{ job.video_quality }}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Error Message -->
+                            {% if job.error_message %}
+                                <div class="alert alert-danger py-2" role="alert">
+                                    <small>
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        {{ job.error_message[:100] }}{% if job.error_message|length > 100 %}...{% endif %}
+                                    </small>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('job_details', job_id=job.id) }}" 
+                                   class="btn btn-outline-primary btn-sm flex-fill">
+                                    <i class="fas fa-eye me-1"></i>Details
+                                </a>
+                                
+                                {% if job.status.value == 'completed' and job.shorts %}
+                                    <a href="{{ url_for('view_results', job_id=job.id) }}" 
+                                       class="btn btn-success btn-sm flex-fill">
+                                        <i class="fas fa-play me-1"></i>Results
+                                    </a>
+                                {% endif %}
+                                
+                                <button class="btn btn-outline-danger btn-sm" 
+                                        onclick="deleteJob({{ job.id }})" title="Delete Job">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-tasks fa-4x text-muted opacity-50"></i>
+            </div>
+            <h4 class="text-muted mb-3">No Processing Jobs Yet</h4>
+            <p class="text-muted mb-4">Start creating viral shorts by submitting your first YouTube video.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>Create Your First Job
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Enhanced JavaScript for Real-time Updates and Interactions -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    const jobsContainer = document.getElementById('jobsContainer');
+    
+    // Check if there are active jobs
+    const activeJobs = document.querySelectorAll('[data-status="pending"], [data-status="downloading"], [data-status="transcribing"], [data-status="analyzing"], [data-status="editing"]');
+    
+    let refreshInterval;
+    let refreshCounter = 0;
+
+    // Auto-refresh for active jobs
+    if (activeJobs.length > 0) {
+        startAutoRefresh();
+    }
+
+    function startAutoRefresh() {
+        refreshInterval = setInterval(() => {
+            refreshCounter++;
+            updateJobStatus();
+            
+            // Update refresh button to show countdown
+            const countdown = 10 - (refreshCounter % 10);
+            refreshBtn.innerHTML = `<i class="fas fa-sync-alt me-1"></i><span class="d-none d-sm-inline">Refresh (${countdown})</span>`;
+            
+            if (refreshCounter % 10 === 0) {
+                refreshJobs();
+            }
+        }, 1000);
+    }
+
+    function stopAutoRefresh() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i><span class="d-none d-sm-inline">Refresh</span>';
+        }
+    }
+
+    function updateJobStatus() {
+        // Animate progress bars for active jobs
+        document.querySelectorAll('.progress-bar').forEach(bar => {
+            const currentWidth = parseInt(bar.style.width);
+            if (currentWidth < 90) {
+                // Simulate progress increase
+                const newWidth = Math.min(currentWidth + Math.random() * 2, 90);
+                bar.style.width = newWidth + '%';
+                bar.setAttribute('data-progress', newWidth);
+            }
+        });
+    }
+
+    function refreshJobs() {
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newJobsContainer = doc.getElementById('jobsContainer');
+                
+                if (newJobsContainer && jobsContainer) {
+                    jobsContainer.innerHTML = newJobsContainer.innerHTML;
+                    
+                    // Check if there are still active jobs
+                    const newActiveJobs = document.querySelectorAll('[data-status="pending"], [data-status="downloading"], [data-status="transcribing"], [data-status="analyzing"], [data-status="editing"]');
+                    
+                    if (newActiveJobs.length === 0) {
+                        stopAutoRefresh();
+                        showNotification('All jobs completed!', 'success');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing jobs:', error);
+                showNotification('Failed to refresh jobs', 'error');
+            });
+    }
+
+    // Manual refresh
+    refreshBtn.addEventListener('click', () => {
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i><span class="d-none d-sm-inline">Refreshing...</span>';
+        refreshJobs();
+        setTimeout(() => {
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i><span class="d-none d-sm-inline">Refresh</span>';
+        }, 1000);
+    });
+
+    // Global functions for button actions
+    window.deleteJob = function(jobId) {
+        if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+            fetch(`/delete_job/${jobId}`, { 
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    const jobCard = document.querySelector(`[data-job-id="${jobId}"]`);
+                    if (jobCard) {
+                        jobCard.style.transform = 'scale(0)';
+                        jobCard.style.opacity = '0';
+                        setTimeout(() => jobCard.remove(), 300);
+                    }
+                    showNotification('Job deleted successfully', 'success');
+                } else {
+                    showNotification('Failed to delete job', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting job:', error);
+                showNotification('Failed to delete job', 'error');
+            });
+        }
+    };
+
+    window.deleteCompletedJobs = function() {
+        const completedJobs = document.querySelectorAll('[data-status="completed"]');
+        if (completedJobs.length === 0) {
+            showNotification('No completed jobs to delete', 'info');
+            return;
+        }
+        
+        if (confirm(`Delete all ${completedJobs.length} completed jobs?`)) {
+            fetch('/jobs/delete-completed', { 
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    completedJobs.forEach(job => {
+                        job.style.transform = 'scale(0)';
+                        job.style.opacity = '0';
+                        setTimeout(() => job.remove(), 300);
+                    });
+                    showNotification('Completed jobs deleted', 'success');
+                } else {
+                    showNotification('Failed to delete completed jobs', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting completed jobs:', error);
+                showNotification('Failed to delete completed jobs', 'error');
+            });
+        }
+    };
+
+    function showNotification(message, type = 'info') {
+        const alertClass = type === 'success' ? 'alert-success' : 
+                          type === 'error' ? 'alert-danger' : 
+                          type === 'warning' ? 'alert-warning' : 'alert-info';
+                          
+        const icon = type === 'success' ? 'fas fa-check-circle' : 
+                     type === 'error' ? 'fas fa-exclamation-circle' : 
+                     type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
+
+        const notification = document.createElement('div');
+        notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+        notification.innerHTML = `
+            <i class="${icon} me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 5000);
+    }
+
+    // Intersection Observer for animations
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    });
+
+    document.querySelectorAll('.job-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+});
+</script>
+{% endblock %}
